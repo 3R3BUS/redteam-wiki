@@ -155,6 +155,32 @@ const DEFAULT_VARS = {
 let vars = { ...DEFAULT_VARS };
 let varsOpen = true;
 let currentSlug = null;
+let showVantablack = false;
+
+function filterVantablack(md) {
+  const lines = md.split('\n');
+  const out = [];
+  let skipping = false;
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      skipping = /^## Vantablack\b/i.test(line);
+    } else if (line.startsWith('# ')) {
+      skipping = false;
+    }
+    if (!skipping) out.push(line);
+  }
+  return out.join('\n');
+}
+
+function toggleVantablack() {
+  showVantablack = !showVantablack;
+  const btn = document.getElementById('vb-toggle');
+  btn.textContent = showVantablack ? '◈ VANTABLACK ON' : '◇ VANTABLACK OFF';
+  btn.style.color = showVantablack ? 'var(--red)' : 'var(--t2)';
+  btn.style.borderColor = showVantablack ? 'var(--red)' : 'var(--border)';
+  btn.style.background = showVantablack ? 'rgba(204,34,34,0.09)' : 'none';
+  if (currentSlug) renderArticle(currentSlug);
+}
 
 function applyVars(text) {
   return Object.entries(vars).reduce((t, [k, v]) => t.split(k).join(v), text);
@@ -205,7 +231,8 @@ function inlineMd(text) {
 }
 
 function renderMd(md) {
-  const lines = md.split('\n');
+  const source = showVantablack ? md : filterVantablack(md);
+  const lines = source.split('\n');
   let html = '';
   let i = 0;
 
@@ -346,6 +373,11 @@ function renderArticle(slug) {
     <div class="art-meta">
       <span class="art-date">LAST UPDATED: ${escHtml(a.last_updated)}</span>
       <span class="art-cat-badge">${escHtml(a.category)}</span>
+      <button id="vb-toggle" onclick="toggleVantablack()" title="Toggle Vantablack-specific sections"
+        style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--t2);
+        font-family:var(--mono);font-size:9px;padding:2px 8px;cursor:pointer;letter-spacing:.06em;">
+        ◇ VANTABLACK OFF
+      </button>
     </div>
     <div class="art-body">${renderMd(a.content)}</div>
   `;
